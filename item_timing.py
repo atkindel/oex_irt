@@ -8,6 +8,7 @@ import time
 import datetime
 import random
 from os.path import expanduser
+from itertools import izip
 from collections import namedtuple, defaultdict, MutableMapping
 
 # Data type for calculations. Behaves like a dictionary, but with an immutable key set.
@@ -16,7 +17,15 @@ class Calculations(MutableMapping):
     Data type defines a dictionary with a set of allowed keys.
     '''
     # Class variable that circumscribes allowed calculation keys
-    CALCS = ['first_attempt', 'last_attempt', 'time_to_first_attempt', 'time_to_last_attempt', 'time_spent_attempting', 'n_attempts', 'first_view']
+    CALCS = ['first_attempt',
+             'last_attempt',
+             'last_grade',
+             'time_to_first_attempt',
+             'time_to_last_attempt',
+             'time_spent_attempting',
+             'n_attempts',
+             'first_view'
+            ]
 
     def __init__(self):
         self.data = dict.fromkeys(Calculations.CALCS)
@@ -52,13 +61,17 @@ class CalcEncoder(json.JSONEncoder):
     def default(self, o):
         return o.data
 
+class DateEncoder(json.JSONEncoder):
+    def default(self, o):
+        return str(o)
+
 
 class ItemTimingComputer(object):
     '''
     Takes data from Stanford-formatted OpenEdX courses and runs computations for
     analysis using IRT models. Depends on table Edx.EdxTrackEvent. Will work if
     fed the entire EdxTrackEvent table for a single course for both args, but will
-    run very slowly if so. See 
+    run very slowly if so. See
     '''
 
     def __init__(self, problem_events_dir, browse_events_dir):
@@ -71,13 +84,11 @@ class ItemTimingComputer(object):
         self.browse_events = home + browse_events_dir
 
         # Also store a couple of data structures to store data and computations.
-        # self.events = defaultdict(lambda: defaultdict(list))
-        # self.aggregate = {'problem_check': 0, 'problem_show': 0, 'problem_reset': 0, 'problem_save': 0}
-        # self.missing = {'problem_check': 0, 'problem_show': 0, 'problem_reset': 0, 'problem_save': 0}
-        # self.ignored = {'problem_check': 0, 'problem_show': 0, 'problem_reset': 0, 'problem_save': 0}
-        # self.computations = defaultdict(lambda: defaultdict(Calculations))
         self.events = self.tree(list)
+        self.responses = self.tree(list)
         self.computations = self.tree(Calculations)
+        self.registrations = defaultdict(list)
+        self.problem_meta = defaultdict(list)
         self.aggregate = self.stats()
         self.missing = self.stats()
         self.ignored = self.stats()
@@ -85,6 +96,9 @@ class ItemTimingComputer(object):
         # Are we built yet? Have we computed yet?
         self.built = False
         self.computed = False
+
+        # Finally, we want to keep track of all the problems we run into.
+        self.problemset = set()
 
     @staticmethod
     def tree(ddtype):
@@ -98,7 +112,7 @@ class ItemTimingComputer(object):
         '''
         We want to accumulate a dictionary of counts for each of these events
         '''
-        return {'problem_check': 0, 'problem_show': 0, 'problem_reset': 0, 'problem_save': 0}
+        return {'problem_check': 0, 'problem_show': 0, 'problem_reset': 0, 'problem_save': 0, 'problem_check_fail': 0}
 
     @staticmethod
     def extractProblemID(event_type, raw_id):
@@ -109,6 +123,7 @@ class ItemTimingComputer(object):
         if event_type == 'problem_show':
             problemID = raw_id.split('/')[5]
         elif event_type in ['problem_reset', 'problem_check', 'problem_save']:
+            raw_id = raw_id.replace('://', '/').replace('/', '-')
             problemID = raw_id.split('-')[4].split('_')[0]
         else:
             print "Warning: uncaught event_type %s" % event_type
@@ -128,6 +143,10 @@ class ItemTimingComputer(object):
                     learnerID = row['anon_screen_name']
                     raw_problemID = row['problem_id']
                     event_type = row['event_type']
+                    source = row['event_source']
+                    grade = row['success']
+                    page = row['page']
+                    rdn = row['resource_display_name']
                     timing = datetime.datetime.fromtimestamp(time.mktime(time.strptime(row['time'], '%m/%d/%y %H:%M:%S')))
                     #timing = time.strptime(row['time'], '%m/%d/%y %H:%M:%S')
 
@@ -137,21 +156,36 @@ class ItemTimingComputer(object):
                         continue
 
                     # Drop events that aren't problem_checks
-                    if event_type in ['problem_reset', 'problem_save']:
+                    if event_type in ['problem_reset', 'problem_save', 'problem_check_fail']:
                         self.ignored[event_type] += 1
                         continue
 
-                    # Clean up problemID data by extracting identifier
+                    # Clean up problemID data by extracting identifier; log in problem set
                     problemID = self.extractProblemID(event_type, raw_problemID)
+                    self.problemset.add(problemID)
 
                     # Store aggregate count data
                     self.aggregate[event_type] += 1
 
                     # Store specific event data
-                    parsed_event = (timing, event_type)
-                    self.events[learnerID][problemID].append(parsed_event)
+                    parsed_event = (timing, event_type, page, rdn, source, grade)
+                    if source == 'browser':
+                        self.events[learnerID][problemID].append(parsed_event)
+                    else:
+                        self.responses[learnerID][problemID].append(parsed_event)
 
             self.built = True
+
+    @staticmethod
+    def paired(iterable):
+        '''
+        Generator for paired iteration.
+        '''
+        if not len(iterable) % 2:
+            raise ValueError("Iterable has odd number of elements")
+        it = iter(iterable)
+        while True:
+            yield it.next(), it.next()
 
     def compute(self):
         '''
@@ -165,18 +199,25 @@ class ItemTimingComputer(object):
             # First, we'll sort and organize our problem interaction data
             for learner in self.events:
                 for problem in self.events[learner]:
-                    # First, we sort this event list by time
+                    # First, we get our event list
                     event_list = sorted(self.events[learner][problem])
 
-                    # Then, we want each column of the event data separately
-                    times, types = [list(elem) for elem in zip(*event_list)]
+                    # Next, we can fetch our matching list of server responses
+                    response_list = sorted(self.responses[learner][problem])
 
-                    # Compute and store in our data structure as defined above
+                    # Then, we want each column of the event data separately
+                    times, types, pages, rdns, sources, grades = [list(elem) for elem in zip(*event_list)]
+
+                    # Store problem metadata
+                    self.problem_meta[problem] = [pages[0], rdns[0]]
+
+                    # Compute and store in our data structures as defined above
                     # Leave these calculable for the time being
                     data = Calculations()
                     data['first_attempt'] = times[0]
                     data['last_attempt'] = times[-1]
                     data['n_attempts'] = len(times)
+                    data['last_grade'] = grades[-1]
                     self.computations[learner][problem] = data
 
             # Now we'll run through our browsing data and do our calculations
@@ -213,6 +254,8 @@ class ItemTimingComputer(object):
         '''
         learner = random.choice(self.computations.keys())
         print learner
+        print json.dumps(self.events[learner], indent=4, cls=DateEncoder)
+        print json.dumps(self.responses[learner], indent=4, cls=DateEncoder)
         print json.dumps(self.computations[learner], indent=4, cls=CalcEncoder)
 
     def summary(self):
@@ -228,7 +271,35 @@ class ItemTimingComputer(object):
         print "Events ignored:"
         print json.dumps(self.ignored, indent=4)
 
-    def writeCSV(self, calc):
+    def writeProblemMeta(self, outfile):
+        '''
+        Given an outfile path, write problem metadata to CSV.
+        '''
+        with open(outfile, 'w') as out:
+            wrt = csv.writer(out)
+            wrt.writerow(['problem', 'page', 'resource_display_name'])
+            for problem in self.problem_meta:
+                rowdata = [problem]
+                rowdata.extend(self.problem_meta[problem])
+                wrt.writerow(rowdata)
+
+    def writeCSV(self, calc, outfile):
+        '''
+        Given an outfile path, write the desired calculation to CSV.
+        '''
+        if calc not in Calculations().CALCS:
+            raise KeyError("Calculation %s not valid." % calc)
+        else:
+            with open(outfile, 'w') as out:
+                problems = ['learner']
+                problems.extend(self.problemset)
+                wrt = csv.DictWriter(out, problems, 'NA')
+                wrt.writeheader()
+                for learner in self.computations:
+                    rowdata = {'learner': learner}
+                    for problem in self.computations[learner]:
+                        rowdata[problem] = self.computations[learner][problem][calc]
+                    wrt.writerow(rowdata)
 
 
 
@@ -247,3 +318,7 @@ if __name__ == '__main__':
 
     # Output summary counts
     timer.summary()
+
+    # Write out some data to CSV
+    # timer.writeCSV('time_to_last_attempt', '/Users/vpoluser/VPTL/IRT/time_to_last_attempt.csv')
+    # timer.writeProblemMeta('/Users/vpoluser/VPTL/IRT/problem_metadata.csv')
