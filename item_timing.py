@@ -71,7 +71,8 @@ class ItemTimingComputer(object):
     Takes data from Stanford-formatted OpenEdX courses and runs computations for
     analysis using IRT models. Depends on table Edx.EdxTrackEvent. Will work if
     fed the entire EdxTrackEvent table for a single course for both args, but will
-    run very slowly if so. See
+    run very slowly if so. See event_select.sql for queries to pull optimized
+    base tables.
     '''
 
     def __init__(self, problem_events_dir, browse_events_dir):
