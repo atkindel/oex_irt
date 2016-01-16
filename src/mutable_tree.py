@@ -54,7 +54,8 @@ if __name__ == '__main__':
         test['a']['b']['c']['d'] = 'e'
         print json.dumps(test, indent=4, cls=ExampleMutableTree.MutableTreeEncoder)
         print "**Test 1 passed.\n"
-    except:
+    except Exception as e:
+        print repr(e)
         print "**Test 1 failed.\n"
 
     ## Test 2: leaf key NOT in keylist
