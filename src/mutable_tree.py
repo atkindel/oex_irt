@@ -36,8 +36,6 @@ class MutableTree(MutableMapping):
     def __len__(self):
         return len(self.data)
 
-    class MutableTreeEncoder(json.JSONEncoder):
-        def default(self, obj): return obj.data
 
 
 ## Unit tests ##
@@ -46,6 +44,10 @@ if __name__ == '__main__':
     ## First, we subclass MutableTree with a keylist and instantiate it
     class ExampleMutableTree(MutableTree):
         keylist = ['d', 'e', 'f']
+
+        class MutableTreeEncoder(json.JSONEncoder):
+            def default(self, obj): return obj.data
+            
     test = ExampleMutableTree()
 
     ## Test 1: leaf key in keylist
