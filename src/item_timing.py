@@ -101,12 +101,21 @@ class ItemTimingComputer(object):
         # Finally, we want to keep track of all the problems we run into.
         self.problemset = set()
 
+    # TODO: This could have a better interface if it were its own data type
+    # Also try doing def tree(): return defaultdict(tree)-- this lets you be less explicit about leaf type
     @staticmethod
     def tree(ddtype):
         '''
         Use defaultdicts to simulate a tree of depth 2 with leaves of type 'ddtype'
         '''
         return defaultdict(lambda: defaultdict(ddtype))
+
+    @staticmethod
+    def splitn(obj, char, idx):
+        '''
+        Convenience method gets the *idx*-th fragment of a string split by *char*.
+        '''
+        return obj.split(char)[idx]
 
     @staticmethod
     def stats():
@@ -122,10 +131,10 @@ class ItemTimingComputer(object):
         '''
         problemID = None
         if event_type == 'problem_show':
-            problemID = raw_id.split('/')[5]
+            problemID = raw_id.splitn('/', 5)
         elif event_type in ['problem_reset', 'problem_check', 'problem_save']:
             raw_id = raw_id.replace('://', '/').replace('/', '-')
-            problemID = raw_id.split('-')[4].split('_')[0]
+            problemID = raw_id.splitn('-', 4).splitn('_', 0)
         else:
             print "Warning: uncaught event_type %s" % event_type
         return problemID
@@ -229,7 +238,7 @@ class ItemTimingComputer(object):
                     etype_str = row['event_type']
                     if 'problem_get' not in etype_str:
                         continue
-                    problem = etype_str.split('/')[6].split(';')[5].strip('_')
+                    problem = etype_str.splitn('/', 6).split(';', 5).strip('_')
                     timing = datetime.datetime.fromtimestamp(time.mktime(time.strptime(row['time'], '%m/%d/%y %H:%M:%S')))
 
                     # Replace if our new time is lower for this pair
@@ -306,8 +315,8 @@ class ItemTimingComputer(object):
 
 if __name__ == '__main__':
     # Set up our event timing computer
-    problem_events_dir = "/VPTL/IRT/ProblemEvents.csv" #TODO: this should track server problem_check responses
-    browse_events_dir = "/VPTL/IRT/BrowseEvents.csv"
+    problem_events_dir = "/Code/irt/data/ProblemEvents.csv" #TODO: this should track server problem_check responses too
+    browse_events_dir = "/Code/irt/data/BrowseEvents.csv"
     timer = ItemTimingComputer(problem_events_dir, browse_events_dir)
 
     # Build data and compute

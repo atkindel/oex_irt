@@ -1,2 +1,8 @@
-old/
 *.sql
+data/
+*.tex
+*.log
+*.aux
+*.pdf
+*_cfp.md
+*.txt
