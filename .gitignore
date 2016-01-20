@@ -6,3 +6,4 @@ data/
 *.pdf
 *_cfp.md
 *.txt
+*.pyc
