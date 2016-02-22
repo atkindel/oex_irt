@@ -7,3 +7,5 @@ data/
 *_cfp.md
 *.txt
 *.pyc
+*.sh
+coursera/
