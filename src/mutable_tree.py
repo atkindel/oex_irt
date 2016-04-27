@@ -10,6 +10,7 @@
 from collections import defaultdict, MutableMapping
 import json
 
+
 class MutableTree(MutableMapping):
 
     def __init__(self):
@@ -54,7 +55,8 @@ if __name__ == '__main__':
         keylist = ['d', 'e', 'f']
 
         class MutableTreeEncoder(json.JSONEncoder):
-            def default(self, obj): return obj.data
+            def default(self, obj):
+                return obj.data
 
     test = ExampleMutableTree()
 
@@ -84,7 +86,8 @@ if __name__ == '__main__':
         keylist = None
 
         class MutableTreeEncoder(json.JSONEncoder):
-            def default(self, obj): return obj.data
+            def default(self, obj):
+                return obj.data
 
     test2 = ExampleFreeTree()
 
@@ -103,7 +106,8 @@ if __name__ == '__main__':
         keylist = None
 
         class MutableTreeEncoder(json.JSONEncoder):
-            def default(self, obj): return obj.data
+            def default(self, obj):
+                return obj.data
 
     test3 = ExampleListTree()
 
