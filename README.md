@@ -8,7 +8,7 @@ Tools for producing IRT-ready datasets from OpenEdX tracking data.
 - **make fetch-raws**: Pull raw data files to local directory.
 
 #### Transforming data
-TODO
+- **make parse**: Calculate IRT matrices from raw data files.
 
 #### Cleaning up files
 - **make local-clean**: Remove raw files from local directory.
