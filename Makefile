@@ -8,7 +8,7 @@ fetch-raws: scripts/fetch_raws.sh scripts/add_get_header.sh
 	./scripts/add_get_header.sh
 
 parse:
-	./src/item_timing.py
+	./src/compute_matrices.py
 
 remote-clean: scripts/remote_clean.sh
 	./scripts/remote_clean.sh
