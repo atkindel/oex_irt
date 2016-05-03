@@ -139,6 +139,7 @@ class ItemMatrixComputer(object):
                     _, _, _, _, grades, _, _, times = [list(elem) for elem in zip(*response_list)]
                 except:
                     grades = ['none']
+                    continue
 
                 # Catch item metadata
                 self.problem_meta[item] = [pages[0], rdns[0]]
@@ -174,6 +175,8 @@ class ItemMatrixComputer(object):
                         calcs = ItemTimingData(first_view=timing,
                                                time_to_first_attempt=self.item_attempts[learner][iuri].first_attempt - timing,
                                                time_to_last_attempt=self.item_attempts[learner][iuri].last_attempt - timing)
+                        if calcs.time_to_first_attempt < 0 or calcs.time_to_last_attempt < 0:
+                            print("%s timing computation went negative for learner %s" % (iuri, learner))
                         self.item_timing[learner][iuri] = calcs
                         seen[learner].append(item)  # Keep track of which items we've calculated first views for
 
@@ -218,6 +221,8 @@ class ItemMatrixComputer(object):
             data = self.item_attempts if var in ItemAttemptData._fields else self.item_timing
             for learner in data:
                 rowdata = {'learner': learner}
+                if not len(data[learner].keys()):
+                    continue
                 for problem in data[learner]:
                     rowdata[problem] = getattr(data[learner][problem], var)
                 wrt.writerow(rowdata)
