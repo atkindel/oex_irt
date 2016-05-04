@@ -56,6 +56,10 @@ class ItemMatrixComputer(object):
         self.item_attempts = defaultdict(lambda: defaultdict(ItemAttemptData))
         self.item_timing = defaultdict(lambda: defaultdict(ItemTimingData))
 
+        # Missing or bad data
+        self.dropped = list()
+        self.negative = list()
+
         # Unique problem IDs
         self.problemset = set()
 
@@ -103,6 +107,7 @@ class ItemMatrixComputer(object):
                 # Skip if we didn't get any problemID information (might be '\N' or empty string)
                 if len(event.item) < 3:
                     self.missing[event.type] += 1  # keep track of what we're losing
+                    self.dropped.append(event)
                     continue
 
                 # Drop events that aren't valid problem submissions
@@ -176,8 +181,9 @@ class ItemMatrixComputer(object):
                                                time_to_first_attempt=self.item_attempts[learner][iuri].first_attempt - timing,
                                                time_to_last_attempt=self.item_attempts[learner][iuri].last_attempt - timing)
                         if calcs.time_to_first_attempt < 0 or calcs.time_to_last_attempt < 0:
-                            print("%s timing computation went negative for learner %s" % (iuri, learner))
-                        self.item_timing[learner][iuri] = calcs
+                            self.negative.append(calcs)  # Log this learner-item pair as timing-negative and continue without adding to final matrix
+                        else:
+                            self.item_timing[learner][iuri] = calcs
                         seen[learner].append(item)  # Keep track of which items we've calculated first views for
 
 
@@ -208,6 +214,12 @@ class ItemMatrixComputer(object):
             print("Events ignored:", file=out)
             print(json.dumps(self.ignored, indent=4), file=out)
 
+            print("Bad event log:", file=out)
+            print(json.dumps(self.dropped, indent=4), file=out)
+
+            print("Computed negative:", file=out)
+            print(json.dumps(self.negative, indent=4), file=out)
+
 
     def writeCSV(self, var, outfile):
         '''
@@ -222,7 +234,7 @@ class ItemMatrixComputer(object):
             for learner in data:
                 rowdata = {'learner': learner}
                 if not len(data[learner].keys()):
-                    continue
+                    continue  # Ignore rows for learners that tried no problems
                 for problem in data[learner]:
                     rowdata[problem] = getattr(data[learner][problem], var)
                 wrt.writerow(rowdata)
