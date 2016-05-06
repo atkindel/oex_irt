@@ -8,3 +8,4 @@ INTO OUTFILE '/home/dataman/Data/CustomExcerpts/SU_Kindel_IRT_raws/{0}_ProblemMe
 	LINES TERMINATED BY '\n'
 FROM Edx.EdxProblem ep
 WHERE course_display_name = '{1}'
+ORDER BY chapter_idx, sequential_idx, vertical_idx, problem_idx
