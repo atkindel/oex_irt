@@ -9,6 +9,7 @@ Tools for producing IRT-ready datasets from OpenEdX tracking data.
 
 #### Transforming data
 - **make parse**: Calculate IRT matrices from raw data files.
+- **make churn**: Run entire process through parse step.
 
 #### Cleaning up files
 - **make local-clean**: Remove raw files from local directory.
