@@ -15,6 +15,3 @@ remote-clean: scripts/remote_clean.sh
 
 local-clean:
 	rm -rf ./data/raws
-
-churn:
-	generate-raws fetch-raws parse
