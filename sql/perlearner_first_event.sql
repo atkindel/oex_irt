@@ -7,6 +7,6 @@ INTO OUTFILE '/home/dataman/Data/CustomExcerpts/SU_Kindel_IRT_raws/{0}_Registrat
 FROM Edx.EdxTrackEvent et, Edx.CourseInfo ci
 WHERE et.course_display_name = '{1}'
 AND et.course_display_name = ci.course_display_name
-AND event_type = 'edx.course.enrollment.activated'
+AND event_type != 'about'  # First event that wasn't just looking at the registration page
 GROUP BY anon_screen_name
 ORDER BY `time`;
