@@ -1,6 +1,6 @@
 SELECT 'anon_screen_name', 'event_type', 'time'
 UNION ALL
-SELECT anon_screen_name, event_type, `time`
+SELECT anon_screen_name, event_type, unix_timestamp(`time`)
 INTO OUTFILE '/home/dataman/Data/CustomExcerpts/SU_Kindel_IRT_raws/{0}_ViewProgress.csv'
 	FIELDS ESCAPED BY '"' TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
 	LINES TERMINATED BY '\n'
