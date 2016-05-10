@@ -244,7 +244,7 @@ if __name__ == '__main__':
 
     # Retrieve course IDs
     course_ids = []
-    with open('./data/courselist.txt', 'r') as clist:
+    with open('./data/done_courses.txt', 'r') as clist:
         for course in clist:
             course_ids.append(course.replace('/', '_').rstrip())
 
