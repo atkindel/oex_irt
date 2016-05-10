@@ -6,6 +6,7 @@ generate-raws: scripts/open_tunnel.sh scripts/generate_raws.py scripts/close_tun
 fetch-raws: scripts/fetch_raws.sh scripts/add_get_header.sh
 	./scripts/fetch_raws.sh
 	./scripts/add_get_header.sh
+	./scripts/add_meta_header.sh
 
 parse:
 	./src/compute_matrices.py
