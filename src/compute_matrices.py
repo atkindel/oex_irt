@@ -274,7 +274,6 @@ if __name__ == '__main__':
         print("Computed item timing data: %s" % course_id)
 
         # Check that load worked
-        timer.loadcheck(outfile='/Users/vpoluser/Code/irt/data/exports/%s/export_summary.txt' % course_id)
         timer.loadsummary(outfile='/Users/vpoluser/Code/irt/data/exports/%s/export_summary.txt' % course_id)
 
         # Write out data to CSV

@@ -8,6 +8,7 @@ fetch-raws: scripts/fetch_raws.sh scripts/add_get_header.sh
 	./scripts/add_get_header.sh
 	./scripts/add_meta_header.sh
 	./scripts/add_certs_header.sh
+	./scripts/hotfix.sh
 
 parse:
 	./src/compute_matrices.py
