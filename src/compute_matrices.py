@@ -132,19 +132,22 @@ class ItemMatrixComputer(object):
         '''
         Run computations over stored data on item attempts.
         '''
-        for learner in self.events:
-            for item in self.events[learner]:
+        for learner in self.responses:
+            for item in self.responses[learner]:
                 # Sort events by timestamp
                 event_list = sorted(self.events[learner][item], key=lambda e: e.time)
                 response_list = sorted(self.responses[learner][item], key=lambda e: e.time)
 
                 # Break out sorted data into corresponding lists
-                _, _, types, sources, _, pages, rdns, _ = [list(elem) for elem in zip(*event_list)]
+                try:
+                    _, _, types, sources, _, pages, rdns, _ = [list(elem) for elem in zip(*event_list)]
+                except:
+                    pages = ['none']
+                    rdns = ['none']  # No browser events found
                 try:
                     _, _, _, _, grades, _, _, times = [list(elem) for elem in zip(*response_list)]
                 except:
-                    grades = ['none']
-                    continue
+                    continue  # No server events found
 
                 # Catch item metadata
                 self.problem_meta[item] = [pages[0], rdns[0]]
