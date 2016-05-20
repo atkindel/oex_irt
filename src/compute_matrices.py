@@ -19,7 +19,7 @@ from collections import namedtuple, defaultdict
 
 
 Event = namedtuple('Event', ['learner', 'item', 'type', 'source', 'grade', 'page', 'rdn', 'time'])
-ItemAttemptData = namedtuple('ItemAttemptData', ['first_attempt', 'last_attempt', 'n_attempts', 'last_grade', 'first_grade', 'time_spent_attempting'])
+ItemAttemptData = namedtuple('ItemAttemptData', ['first_attempt', 'second_attempt', 'third_attempt', 'fourth_attempt', 'fifth_attempt', 'last_attempt', 'n_attempts', 'last_grade', 'first_grade', 'time_spent_attempting'])
 ItemTimingData = namedtuple('ItemTimingData', ['first_view', 'time_to_first_attempt', 'time_to_last_attempt'])
 
 
@@ -173,6 +173,10 @@ class ItemMatrixComputer(object):
 
                 # Store data on item attempts
                 calcs = ItemAttemptData(first_attempt=times[0],
+                                        second_attempt=times[1] if len(times) > 1 else times[-1],
+                                        third_attempt=times[2] if len(times) > 2 else times[-1],
+                                        fourth_attempt=times[3] if len(times) > 3 else times[-1],
+                                        fifth_attempt=times[4] if len(times) > 4 else times[-1],
                                         last_attempt=times[-1],
                                         n_attempts=len(times),
                                         last_grade=grades[-1],
