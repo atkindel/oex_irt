@@ -20,7 +20,7 @@ from collections import namedtuple, defaultdict
 
 Event = namedtuple('Event', ['learner', 'item', 'type', 'source', 'grade', 'page', 'rdn', 'time'])
 ItemAttemptData = namedtuple('ItemAttemptData', ['first_attempt', 'second_attempt', 'third_attempt', 'fourth_attempt', 'fifth_attempt', 'last_attempt', 'n_attempts', 'last_grade', 'first_grade', 'time_spent_attempting'])
-ItemTimingData = namedtuple('ItemTimingData', ['first_view', 'time_to_first_attempt', 'time_to_last_attempt'])
+ItemTimingData = namedtuple('ItemTimingData', ['first_view', 'time_to_first_attempt', 'time_to_second_attempt', 'time_to_third_attempt', 'time_to_fourth_attempt', 'time_to_fifth_attempt', 'time_to_last_attempt'])
 
 
 class ItemMatrixComputer(object):
@@ -179,8 +179,12 @@ class ItemMatrixComputer(object):
                                         fifth_attempt=times[4] if len(times) > 4 else times[-1],
                                         last_attempt=times[-1],
                                         n_attempts=len(times),
-                                        last_grade=grades[-1],
                                         first_grade=grades[0],
+                                        second_grade=grades[1] if len(grades) > 1 else grades[-1],
+                                        third_grade=grades[2] if len(grades) > 2 else grades[-1],
+                                        fourth_grade=grades[3] if len(grades) > 3 else grades[-1],
+                                        fifth_grade=grades[4] if len(grades) > 4 else grades[-1],
+                                        last_grade=grades[-1],
                                         time_spent_attempting=times[-1] - times[0])
                 self.item_attempts[learner][item] = calcs
 
@@ -209,6 +213,10 @@ class ItemMatrixComputer(object):
                     for iuri in filter(lambda i: i.find(item) != -1, self.item_attempts[learner].keys()):
                         calcs = ItemTimingData(first_view=timing,
                                                time_to_first_attempt=self.item_attempts[learner][iuri].first_attempt - timing,
+                                               time_to_second_attempt=self.item_attempts[learner][iuri].second_attempt - timing,
+                                               time_to_third_attempt=self.item_attempts[learner][iuri].third_attempt - timing,
+                                               time_to_fourth_attempt=self.item_attempts[learner][iuri].fourth_attempt - timing,
+                                               time_to_fifth_attempt=self.item_attempts[learner][iuri].fifth_attempt - timing,
                                                time_to_last_attempt=self.item_attempts[learner][iuri].last_attempt - timing)
                         if calcs.time_to_first_attempt < 0 or calcs.time_to_last_attempt < 0:
                             self.negative.append({"item": iuri, "learner": learner})  # Log this learner-item pair as timing-negative and continue without adding to final matrix
