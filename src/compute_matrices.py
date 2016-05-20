@@ -19,7 +19,8 @@ from collections import namedtuple, defaultdict
 
 
 Event = namedtuple('Event', ['learner', 'item', 'type', 'source', 'grade', 'page', 'rdn', 'time'])
-ItemAttemptData = namedtuple('ItemAttemptData', ['first_attempt', 'second_attempt', 'third_attempt', 'fourth_attempt', 'fifth_attempt', 'last_attempt', 'n_attempts', 'last_grade', 'first_grade', 'time_spent_attempting'])
+ItemAttemptData = namedtuple('ItemAttemptData', ['first_attempt', 'second_attempt', 'third_attempt', 'fourth_attempt', 'fifth_attempt', 'last_attempt', 'n_attempts', 'last_grade', 'first_grade',
+                                                 'second_grade', 'third_grade', 'fourth_grade', 'fifth_grade', 'time_spent_attempting'])
 ItemTimingData = namedtuple('ItemTimingData', ['first_view', 'time_to_first_attempt', 'time_to_second_attempt', 'time_to_third_attempt', 'time_to_fourth_attempt', 'time_to_fifth_attempt', 'time_to_last_attempt'])
 
 
